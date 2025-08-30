@@ -26,41 +26,40 @@
     const ctx = canvas.getContext("2d");
 
     let frame = new Image();
-    frame.src = "frame.png"; // file PNG khung (nền đỏ + lỗ trống trong suốt)
+    frame.src = "frame.png"; // PNG khung (nền đỏ + khoảng trống trong suốt)
 
     let userImg = null;
-    let userX = 100, userY = 100;
-    let isDragging = false;
-    let offsetX, offsetY;
+    let uploadedFile = null;
+    let userX = 0, userY = 0, userW = 0, userH = 0;
+    let isDragging = false, offsetX = 0, offsetY = 0;
 
-    // Vẽ lại canvas
+    // Hàm vẽ lại
     function redraw() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       if (userImg) {
-        ctx.drawImage(userImg, userX, userY, userImg.width, userImg.height);
+        ctx.drawImage(userImg, userX, userY, userW, userH);
       }
-      ctx.drawImage(frame, 0, 0, canvas.width, canvas.height); // khung luôn trên cùng
+      ctx.drawImage(frame, 0, 0, canvas.width, canvas.height); // khung đè lên trên cùng
     }
 
     // Upload ảnh
-    let uploadedFile = null;
     document.getElementById("upload").addEventListener("change", (e) => {
       uploadedFile = e.target.files[0];
     });
 
-    // Nút "Gắn vào khung"
+    // Gắn ảnh vào khung
     document.getElementById("apply").addEventListener("click", () => {
       if (!uploadedFile) return alert("Hãy chọn ảnh trước!");
       const reader = new FileReader();
       reader.onload = (ev) => {
         userImg = new Image();
         userImg.onload = () => {
-          // Thu nhỏ ảnh user vừa khung
+          // Tính scale phù hợp
           let scale = Math.min(canvas.width / userImg.width, canvas.height / userImg.height);
-          userImg.width = userImg.width * scale;
-          userImg.height = userImg.height * scale;
-          userX = (canvas.width - userImg.width) / 2;
-          userY = (canvas.height - userImg.height) / 2;
+          userW = userImg.width * scale;
+          userH = userImg.height * scale;
+          userX = (canvas.width - userW) / 2;
+          userY = (canvas.height - userH) / 2;
           redraw();
         };
         userImg.src = ev.target.result;
@@ -74,7 +73,7 @@
       const rect = canvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      if (x > userX && x < userX + userImg.width && y > userY && y < userY + userImg.height) {
+      if (x > userX && x < userX + userW && y > userY && y < userY + userH) {
         isDragging = true;
         offsetX = x - userX;
         offsetY = y - userY;
@@ -95,13 +94,13 @@
 
     // Download
     document.getElementById("download").addEventListener("click", () => {
+      redraw(); // vẽ lần cuối đảm bảo đúng vị trí
       const link = document.createElement("a");
       link.download = "anh-ghep.png";
       link.href = canvas.toDataURL("image/png");
       link.click();
     });
 
-    // Khi khung load xong thì vẽ lần đầu
     frame.onload = redraw;
   </script>
 </body>
